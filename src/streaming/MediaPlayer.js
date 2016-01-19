@@ -90,6 +90,7 @@ MediaPlayer = function (context) {
         UTCTimingSources = [],
         liveDelayFragmentCount = 4,
         usePresentationDelay = false,
+        websocket, // ADDED
 
         isReady = function () {
             return (!!element && !!source && !resetting);
@@ -356,6 +357,8 @@ MediaPlayer = function (context) {
             playbackController = system.getObject("playbackController");
             mediaController = system.getObject("mediaController");
             this.restoreDefaultUTCTimingSources();
+            websocket = system.getObject("websocket"); // ADD
+            websocket.connect(); // ADD
         },
 
         /**

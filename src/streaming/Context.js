@@ -65,6 +65,7 @@ MediaPlayer.di.Context = function () {
             this.system.mapSingleton('virtualBuffer', MediaPlayer.utils.VirtualBuffer);
             this.system.mapClass('isoFile', MediaPlayer.utils.IsoFile);
             this.system.mapSingleton('randomNumberGenerator', MediaPlayer.utils.RNG);
+            this.system.mapSingleton('websocket', MediaPlayer.utils.WebSocket); // ADDED
 
             this.system.mapSingleton('textTrackExtensions', MediaPlayer.utils.TextTrackExtensions);
             this.system.mapSingleton('vttParser', MediaPlayer.utils.VTTParser);

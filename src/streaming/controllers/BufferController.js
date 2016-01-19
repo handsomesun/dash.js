@@ -597,6 +597,9 @@ MediaPlayer.dependencies.BufferController = function () {
             var self = this,
                 newQuality = e.data.newQuality;
 
+            self.log("========= Quality changes to " + e.data.newQuality); // ADDED
+            self.websocket.send("Quality changes to " + e.data.newQuality); // ADDED
+
             // if the quality has changed we should append the initialization data again. We get it
             // from the cached array instead of sending a new request
             if (requiredQuality === newQuality) return;
@@ -691,6 +694,7 @@ MediaPlayer.dependencies.BufferController = function () {
         unsubscribe: undefined,
         virtualBuffer: undefined,
         textSourceBuffer:undefined,
+        websocket: undefined, // ADDED
 
         setup: function() {
             this[Dash.dependencies.RepresentationController.eventList.ENAME_DATA_UPDATE_COMPLETED] = onDataUpdateCompleted;
