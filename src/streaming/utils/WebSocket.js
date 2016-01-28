@@ -12,17 +12,21 @@ MediaPlayer.utils.WebSocket = function () {
 
 		connect: function () {
 			var self = this;
-			websocket = new WebSocket('ws://192.168.0.23:9000', 'my-protocol');
+			websocket = new WebSocket('ws://router:9000', 'my-protocol');
 			self.log("INITIATING WEBSOCKET!!!");
 
 			websocket.onopen = function () {
 				self.log("WEBSOCKET INIT");
-                connected = true;
-            };
+				connected = true;
+			};
 
 			websocket.onerror = function () {
-                self.log("ERROR OCCUR");
-            };
+				self.log("ERROR OCCUR");
+			};
+
+			websocket.onmessage = function(event) {
+				self.log("========== Server: " + event.data + " ==========");
+			};
 		},
 
 		send: function(content) {
