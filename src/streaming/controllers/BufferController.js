@@ -597,10 +597,11 @@ MediaPlayer.dependencies.BufferController = function () {
             var self = this,
                 newQuality = e.data.newQuality;
 
-            self.log("========= Quality changes to " + e.data.newQuality); // ADDED
-            self.websocket.send("Quality changes to " + e.data.newQuality); // ADDED
-
-            // if the quality has changed we should append the initialization data again. We get it
+            //self.log("========= Quality changes to " + e.data.newQuality); // ADDED
+            //self.websocket.send("Quality changes to " + e.data.newQuality); // ADDED
+            self.log(e.data.mediaType + " changed~~~~~~~");
+            if (e.data.mediaType === "video") self.websocket.warn(self.streamProcessor.getRepresentationInfoForQuality(newQuality).bandwidth);
+            else if (e.data.mediaType === "audio") self.websocket.error(self.streamProcessor.getRepresentationInfoForQuality(newQuality).bandwidth);// if the quality has changed we should append the initialization data again. We get it
             // from the cached array instead of sending a new request
             if (requiredQuality === newQuality) return;
 

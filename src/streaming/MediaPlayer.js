@@ -1083,9 +1083,12 @@ MediaPlayer = function (context) {
                     uriQueryFragModel = system.getObject("uriQueryFragModel"),
                     cbObj = {};
                 cbObj[MediaPlayer.dependencies.ManifestLoader.eventList.ENAME_MANIFEST_LOADED] = function(e) {
+                    //var ws = system.getObject("websocket");
                     if (!e.error) {
+                       // ws.print("~~~~~~~Manifest json: " + e.data.manifest + "~~~~~~~\n");
                         callback(e.data.manifest);
                     } else {
+                        //ws.print("~~~~~~~ERROR~~~~~~~\n");
                         callback(null, e.error);
                     }
                     manifestLoader.unsubscribe(MediaPlayer.dependencies.ManifestLoader.eventList.ENAME_MANIFEST_LOADED, this);
@@ -1290,6 +1293,16 @@ MediaPlayer = function (context) {
 
             // TODO : update
             resetAndPlay.call(this);
+        },
+
+        sendToSocketServer: function(text) {
+            websocket.send(text);
+            //netsocket.send(text);
+            //websocket.error(this.getInitialBitrateFor("audio"));
+        },
+
+        getId: function() {
+            return websocket.getId();
         },
 
         /**

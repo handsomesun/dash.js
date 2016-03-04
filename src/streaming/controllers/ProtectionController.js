@@ -99,7 +99,7 @@ MediaPlayer.dependencies.ProtectionController = function () {
                                     });
                                 }
                             } else {
-                                self.log("KeySystem Access Granted");
+                                //self.log("KeySystem Access Granted");
                                 self.eventBus.dispatchEvent({
                                     type: MediaPlayer.dependencies.ProtectionController.events.KEY_SYSTEM_SELECTED,
                                     data: event.data
@@ -137,7 +137,7 @@ MediaPlayer.dependencies.ProtectionController = function () {
                         }
                     } else {
                         keySystemAccess = event.data;
-                        self.log("KeySystem Access Granted (" + keySystemAccess.keySystem.systemString + ")!  Selecting key system...");
+                        //self.log("KeySystem Access Granted (" + keySystemAccess.keySystem.systemString + ")!  Selecting key system...");
                         self.protectionModel.selectKeySystem(keySystemAccess);
                     }
                 };
@@ -208,7 +208,7 @@ MediaPlayer.dependencies.ProtectionController = function () {
 
             // Message not destined for license server
             if (!licenseServerData) {
-                this.log("DRM: License server request not required for this message (type = " + e.data.messageType + ").  Session ID = " + sessionToken.getSessionID());
+                //this.log("DRM: License server request not required for this message (type = " + e.data.messageType + ").  Session ID = " + sessionToken.getSessionID());
                 sendEvent(eventData);
                 return;
             }
@@ -217,7 +217,7 @@ MediaPlayer.dependencies.ProtectionController = function () {
             if (this.protectionExt.isClearKey(this.keySystem)) {
                 var clearkeys = this.protectionExt.processClearKeyLicenseRequest(protData, message);
                 if (clearkeys)  {
-                    this.log("DRM: ClearKey license request handled by application!");
+                    //this.log("DRM: ClearKey license request handled by application!");
                     sendEvent(eventData);
                     this.protectionModel.updateKeySession(sessionToken, clearkeys);
                     return;
@@ -307,7 +307,7 @@ MediaPlayer.dependencies.ProtectionController = function () {
         onNeedKey = function (event) {
             // Ignore non-cenc initData
             if (event.data.initDataType !== "cenc") {
-                this.log("DRM:  Only 'cenc' initData is supported!  Ignoring initData of type: " + event.data.initDataType);
+                //this.log("DRM:  Only 'cenc' initData is supported!  Ignoring initData of type: " + event.data.initDataType);
                 return;
             }
 
@@ -320,7 +320,7 @@ MediaPlayer.dependencies.ProtectionController = function () {
 
             var supportedKS = this.protectionExt.getSupportedKeySystems(abInitData);
             if (supportedKS.length === 0) {
-                this.log("Received needkey event with initData, but we don't support any of the key systems!");
+                //this.log("Received needkey event with initData, but we don't support any of the key systems!");
                 return;
             }
 
@@ -329,7 +329,7 @@ MediaPlayer.dependencies.ProtectionController = function () {
 
         onServerCertificateUpdated = function(event) {
             if (!event.error) {
-                this.log("DRM: License server certificate successfully updated.");
+                //this.log("DRM: License server certificate successfully updated.");
                 this.eventBus.dispatchEvent({
                     type: MediaPlayer.dependencies.ProtectionController.events.SERVER_CERTIFICATE_UPDATED,
                     data: null,
@@ -346,7 +346,7 @@ MediaPlayer.dependencies.ProtectionController = function () {
 
         onKeySessionCreated = function(event) {
             if (!event.error) {
-                this.log("DRM: Session created.  SessionID = " + event.data.getSessionID());
+                //this.log("DRM: Session created.  SessionID = " + event.data.getSessionID());
                 this.eventBus.dispatchEvent({
                     type: MediaPlayer.dependencies.ProtectionController.events.KEY_SESSION_CREATED,
                     data: event.data,
@@ -362,7 +362,7 @@ MediaPlayer.dependencies.ProtectionController = function () {
         },
 
         onKeyAdded = function (/*event*/) {
-            this.log("DRM: Key added.");
+            //this.log("DRM: Key added.");
             this.eventBus.dispatchEvent({
                 type: MediaPlayer.dependencies.ProtectionController.events.KEY_ADDED,
                 data:null,
@@ -380,7 +380,7 @@ MediaPlayer.dependencies.ProtectionController = function () {
 
         onKeySessionClosed = function(event) {
             if (!event.error) {
-                this.log("DRM: Session closed.  SessionID = " + event.data);
+                //this.log("DRM: Session closed.  SessionID = " + event.data);
                 this.eventBus.dispatchEvent({
                     type: MediaPlayer.dependencies.ProtectionController.events.KEY_SESSION_CLOSED,
                     data:event.data,
@@ -397,7 +397,7 @@ MediaPlayer.dependencies.ProtectionController = function () {
 
         onKeySessionRemoved = function(event) {
             if (!event.error) {
-                this.log("DRM: Session removed.  SessionID = " + event.data);
+                //this.log("DRM: Session removed.  SessionID = " + event.data);
                 this.eventBus.dispatchEvent({
                     type: MediaPlayer.dependencies.ProtectionController.events.KEY_SESSION_REMOVED,
                     data:event.data,
@@ -585,7 +585,7 @@ MediaPlayer.dependencies.ProtectionController = function () {
                 var currentInitData = this.protectionModel.getAllInitData();
                 for (var i = 0; i < currentInitData.length; i++) {
                     if (this.protectionExt.initDataEquals(initDataForKS, currentInitData[i])) {
-                        this.log("Ignoring initData because we have already seen it!");
+                        //this.log("Ignoring initData because we have already seen it!");
                         return;
                     }
                 }

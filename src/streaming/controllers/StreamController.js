@@ -367,7 +367,7 @@
 
             manifestDuration = activeStream.getStreamInfo().manifestInfo.duration;
             mediaDuration = self.mediaSourceExt.setDuration(mediaSource, manifestDuration);
-            self.log("Duration successfully set to: " + mediaDuration);
+            //self.log("Duration successfully set to: " + mediaDuration);
         },
 
         composeStreams = function() {
@@ -510,7 +510,7 @@
                         useCalculatedLiveEdgeTime = self.manifestExt.getRepresentationsForAdaptation(manifest, adaptation)[0].useCalculatedLiveEdgeTime;
 
                         if (useCalculatedLiveEdgeTime) {
-                            self .log("SegmentTimeline detected using calculated Live Edge Time");
+                            //self .log("SegmentTimeline detected using calculated Live Edge Time");
                             useManifestDateHeaderTimeSource = false;
                         }
                     }
@@ -522,7 +522,7 @@
                         allUTCTimingSources.forEach(function(item){
                             if (item.value.replace(/.*?:\/\//g, "") === MediaPlayer.UTCTimingSources.default.value.replace(/.*?:\/\//g, "")){
                                 item.value = item.value.replace(isHTTPS ? new RegExp(/^(http:)?\/\//i) : new RegExp(/^(https:)?\/\//i), isHTTPS ? "https://" : "http://");
-                                self.log("Matching default timing source protocol to manifest protocol: " , item.value);
+                                //self.log("Matching default timing source protocol to manifest protocol: " , item.value);
                             }
                         });
                     self.timeSyncController.initialize(allUTCTimingSources, useManifestDateHeaderTimeSource);

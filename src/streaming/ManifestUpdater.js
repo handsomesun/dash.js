@@ -95,6 +95,7 @@ MediaPlayer.dependencies.ManifestUpdater = function () {
 
         onManifestLoaded = function(e) {
             if (!e.error) {
+                this.log("--------------" + JSON.stringify(e.data.manifest) + "--------------\n");
                 update.call(this, e.data.manifest);
             }
         },

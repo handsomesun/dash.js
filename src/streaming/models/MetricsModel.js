@@ -129,7 +129,8 @@ MediaPlayer.models.MetricsModel = function () {
             vo.topen = topen;
             vo.tclose = tclose;
             vo.tconnect = tconnect;
-
+            var ws = this.system.getObject("websocket");
+            ws.print("-------ADDING TCP: " + vo + "-----------\n");
             this.getMetricsFor(mediaType).TcpList.push(vo);
 
             this.metricAdded(mediaType, this.adapter.metricsList.TCP_CONNECTION, vo);
@@ -199,6 +200,8 @@ MediaPlayer.models.MetricsModel = function () {
             this.getMetricsFor(mediaType).HttpList.push(vo);
 
             this.metricAdded(mediaType, this.adapter.metricsList.HTTP_REQUEST, vo);
+            var ws = this.system.getObject("websocket");
+            ws.print("-------ADDING HTTP: " + JSON.stringify(vo) + "-----------\n");
             return vo;
         },
 

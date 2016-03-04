@@ -123,7 +123,7 @@ MediaPlayer.dependencies.FragmentLoader = function () {
                 if (req.status < 200 || req.status > 299) {
                     return;
                 }
-
+                console.log("XMLHTTPREQUEST: " + JSON.stringify(req) + "++++++++++++++");
                 handleLoaded(request, true);
                 self.notify(MediaPlayer.dependencies.FragmentLoader.eventList.ENAME_LOADING_COMPLETED, {request: request, response: req.response});
             };

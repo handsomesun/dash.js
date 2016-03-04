@@ -113,7 +113,7 @@ MediaPlayer.dependencies.PlaybackController = function () {
 
             // if the video model already has a current time.
             var initialSeekTime = getInitialTime.call(this, streamInfo);
-            this.log("Starting playback at offset: " + initialSeekTime);
+            //this.log("Starting playback at offset: " + initialSeekTime);
             this.notify(MediaPlayer.dependencies.PlaybackController.eventList.ENAME_PLAYBACK_SEEKING, {seekTime: initialSeekTime});
         },
 
@@ -169,30 +169,30 @@ MediaPlayer.dependencies.PlaybackController = function () {
         },
 
         onPlaybackStart = function() {
-            this.log("<video> play");
+            //this.log("<video> play");
             updateCurrentTime.call(this);
             startUpdatingWallclockTime.call(this);
             this.notify(MediaPlayer.dependencies.PlaybackController.eventList.ENAME_PLAYBACK_STARTED, {startTime: this.getTime()});
         },
 
         onPlaybackPlaying = function() {
-            this.log("<video> playing");
+            //this.log("<video> playing");
             this.notify(MediaPlayer.dependencies.PlaybackController.eventList.ENAME_PLAYBACK_PLAYING, {playingTime: this.getTime()});
         },
 
         onPlaybackPaused = function() {
-            this.log("<video> pause");
+            //this.log("<video> pause");
             this.notify(MediaPlayer.dependencies.PlaybackController.eventList.ENAME_PLAYBACK_PAUSED, {ended: videoModel.hasEnded()});
         },
 
         onPlaybackSeeking = function() {
-            this.log("<video> seek");
+            //this.log("<video> seek");
             startUpdatingWallclockTime.call(this);
             this.notify(MediaPlayer.dependencies.PlaybackController.eventList.ENAME_PLAYBACK_SEEKING, {seekTime: this.getTime()});
         },
 
         onPlaybackSeeked = function() {
-            this.log("<video> seeked");
+            //this.log("<video> seeked");
             this.notify(MediaPlayer.dependencies.PlaybackController.eventList.ENAME_PLAYBACK_SEEKED);
         },
 
@@ -225,12 +225,12 @@ MediaPlayer.dependencies.PlaybackController = function () {
         onPlaybackRateChanged = function() {
             var rate = this.getPlaybackRate();
 
-            this.log("<video> ratechange: ", rate);
+            //this.log("<video> ratechange: ", rate);
             this.notify(MediaPlayer.dependencies.PlaybackController.eventList.ENAME_PLAYBACK_RATE_CHANGED, {playbackRate: rate});
         },
 
         onPlaybackMetaDataLoaded = function() {
-            this.log("<video> loadedmetadata");
+            //this.log("<video> loadedmetadata");
 
             if (!isDynamic || this.timelineConverter.isTimeSyncCompleted()) {
                 initialStart.call(this);
@@ -241,7 +241,7 @@ MediaPlayer.dependencies.PlaybackController = function () {
         },
 
         onPlaybackEnded = function(/*e*/) {
-            this.log("<video> ended");
+            //this.log("<video> ended");
             stopUpdatingWallclockTime.call(this);
             this.notify(MediaPlayer.dependencies.PlaybackController.eventList.ENAME_PLAYBACK_ENDED);
         },
@@ -468,7 +468,7 @@ MediaPlayer.dependencies.PlaybackController = function () {
 
         seek: function(time) {
             if (!videoModel || time === this.getTime()) return;
-            this.log("Do seek: " + time);
+            //this.log("Do seek: " + time);
             videoModel.setCurrentTime(time);
         },
 

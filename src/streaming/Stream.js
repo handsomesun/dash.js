@@ -224,7 +224,14 @@ MediaPlayer.dependencies.Stream = function () {
                 type: MediaPlayer.events.STREAM_INITIALIZED,
                 data: {streamInfo: streamInfo}
             });
-
+            
+            // if (streamInfo.isLast === true) {
+            //     self.eventBus.dispatchEvent({
+            //         type: MediaPlayer.events.STREAM_INITIALIZED,
+            //         data: {streamInfo: streamInfo}
+            //     });
+            // }
+            
             self.notify(MediaPlayer.dependencies.Stream.eventList.ENAME_STREAM_UPDATED, {streamInfo: streamInfo}, error);
 
             if (!isMediaInitialized || isStreamActivated) return;

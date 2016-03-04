@@ -76,7 +76,7 @@ MediaPlayer.dependencies.ScheduleController = function () {
 
             this.log("start");
 
-            //this.log("begin validation");
+            this.log("begin validation");
             validate.call(this);
         },
 
@@ -116,8 +116,8 @@ MediaPlayer.dependencies.ScheduleController = function () {
             request = self.adapter.getInitRequest(self.streamProcessor, quality);
 
             if (request !== null) {
-                //self.log("Loading initialization: " + request.mediaType + ":" + request.startTime);
-                //self.log(request);
+                self.log("Loading initialization: " + request.mediaType + ":" + request.startTime);
+                self.log(request);
                 self.fragmentController.prepareFragmentForLoading(fragmentModel, request);
             }
 
@@ -172,7 +172,6 @@ MediaPlayer.dependencies.ScheduleController = function () {
 
             if (request) {
                 fragmentsToLoad--;
-                //self.log("Loading fragment: " + request.mediaType + ":" + request.startTime);
                 this.fragmentController.prepareFragmentForLoading(fragmentModel, request);
             } else {
                 this.fragmentController.executePendingRequests();
