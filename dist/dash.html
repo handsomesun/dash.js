@@ -3,9 +3,8 @@
 <html>
 
   <head>
-
+     <meta charset="utf-8"/>
      <title>Dash.js Rocks</title>
-
   </head>
 
   <body>
@@ -32,7 +31,7 @@
 
            player.attachView(document.querySelector("#videoPlayer"));
 
-           /*
+           
            var sendBitrate = function(myip) {
                   var jsonObj = {"ip": myip, "phy": {"w": screen.width, "h": screen.height}, "video": []};
                   var bitrateInfoList = player.getBitrateInfoListFor("video");
@@ -60,7 +59,7 @@
                 }
 
             };
-            */
+            
             
            player.attachSource(url);
 

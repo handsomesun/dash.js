@@ -12,29 +12,27 @@ MediaPlayer.utils.WebSocket = function () {
 		log: undefined,
 
 		connect: function () {
-			//var self = this;
-			//websocket = new WebSocket('ws://192.168.1.184:9000', 'my-protocol');
+			var self = this;
+			websocket = new WebSocket('ws://router:9000', 'my-protocol');
 
-			//websocket.onopen = function () {
-			//self.log("WEBSOCKET INIT, " + JSON.stringify(websocket));
-			//	connected = true;
-			//	var d = new Date();
-			//	var n = d.getTime();
-			//};
+			websocket.onopen = function () {
+			self.log("WEBSOCKET INIT, " + JSON.stringify(websocket));
+				connected = true;
+			};
 
-			//websocket.onerror = function () {
-			//	self.log("ERROR OCCUR");
-			//};
+			websocket.onerror = function () {
+				self.log("ERROR OCCUR");
+			};
 
-			//websocket.onmessage = function(event) {
-			//	self.log("========== Assigned ID: " + event.data + " ==========");
-			//	id = event.data; // server replies back id
-			//};
+			websocket.onmessage = function(event) {
+				self.log("========== Assigned ID: " + event.data + " ==========");
+				id = event.data; // server replies back id
+			};
 		},
 
 		send: function(content) {
 			if (connected !== true || content === null) return;
-			//websocket.send(content);
+			websocket.send(content);
 		},
 
 		info: function(content) {
