@@ -6,7 +6,8 @@ MediaPlayer.utils.WebSocket = function () {
 	
 	var websocket,
 		connected,
-		id;
+		id,
+		bandwidth = 5400;
 
 	return {
 		log: undefined,
@@ -68,6 +69,10 @@ MediaPlayer.utils.WebSocket = function () {
 
 		getId: function() {
 			return id;
+		},
+
+		getBandwidth: function() {
+			return bandwidth;
 		}
 	};
 };

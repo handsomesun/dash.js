@@ -201,7 +201,12 @@ MediaPlayer.models.MetricsModel = function () {
 
             this.metricAdded(mediaType, this.adapter.metricsList.HTTP_REQUEST, vo);
             var ws = this.system.getObject("websocket");
-            ws.print("-------ADDING HTTP: " + JSON.stringify(vo) + "-----------\n");
+            ws.print("-------ADDING HTTP: " + JSON.stringify(vo) + "-----------23\n");
+            if (mediaType === "video") {
+                var curBR = vo._bytes * 8 / vo._mediaduration;
+                ws.error(curBR);
+            }
+            
             return vo;
         },
 

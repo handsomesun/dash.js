@@ -124,7 +124,6 @@ MediaPlayer.dependencies.BufferController = function () {
 
         onMediaLoaded = function (e) {
             if (e.data.fragmentModel !== this.streamProcessor.getFragmentModel()) return;
-
             var events,
                 chunk = e.data.chunk,
                 bytes = chunk.bytes,
@@ -135,13 +134,16 @@ MediaPlayer.dependencies.BufferController = function () {
                 manifest = this.manifestModel.getValue(),
                 eventStreamMedia = this.adapter.getEventsFor(manifest, currentRepresentation.mediaInfo, this.streamProcessor),
                 eventStreamTrack = this.adapter.getEventsFor(manifest, currentRepresentation, this.streamProcessor);
-
+            
             if(eventStreamMedia.length > 0 || eventStreamTrack.length > 0) {
                 events = handleInbandEvents.call(this, bytes, request, eventStreamMedia, eventStreamTrack);
                 this.streamProcessor.getEventController().addInbandEvents(events);
             }
 
             chunk.bytes = deleteInbandEvents.call(this, bytes);
+
+            //var curBR = chunk.bytes * 8 / chunk.duration;
+            this.log("XX XXX XX onMediaLoaded: " + JSON.stringify(chunk));
 
             this.virtualBuffer.append(chunk);
 
@@ -512,6 +514,7 @@ MediaPlayer.dependencies.BufferController = function () {
 
         onInitAppended = function(quality) {
             currentQuality = quality;
+            this.websocket.warn(this.streamProcessor.getRepresentationInfoForQuality(quality).bandwidth);
         },
 
         onMediaAppended = function(index) {
@@ -601,7 +604,7 @@ MediaPlayer.dependencies.BufferController = function () {
             //self.websocket.send("Quality changes to " + e.data.newQuality); // ADDED
             self.log(e.data.mediaType + " changed~~~~~~~");
             if (e.data.mediaType === "video") self.websocket.warn(self.streamProcessor.getRepresentationInfoForQuality(newQuality).bandwidth);
-            else if (e.data.mediaType === "audio") self.websocket.error(self.streamProcessor.getRepresentationInfoForQuality(newQuality).bandwidth);// if the quality has changed we should append the initialization data again. We get it
+            //else if (e.data.mediaType === "audio") self.websocket.error(self.streamProcessor.getRepresentationInfoForQuality(newQuality).bandwidth);// if the quality has changed we should append the initialization data again. We get it
             // from the cached array instead of sending a new request
             if (requiredQuality === newQuality) return;
 

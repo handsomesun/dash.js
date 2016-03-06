@@ -56,6 +56,7 @@ MediaPlayer.dependencies.StreamProcessor = function () {
         baseURLExt: undefined,
         adapter: undefined,
         manifestModel: undefined,
+        websocket: undefined,
 
         initialize: function (typeValue, fragmentController, mediaSource, streamValue, eventControllerValue) {
 
@@ -229,6 +230,10 @@ MediaPlayer.dependencies.StreamProcessor = function () {
 
         getEventController: function() {
             return eventController;
+        },
+
+        getWebsocket: function() {
+            return this.websocket;
         },
 
         start: function() {

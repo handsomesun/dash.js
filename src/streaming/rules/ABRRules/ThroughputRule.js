@@ -40,24 +40,42 @@ MediaPlayer.rules.ThroughputRule = function () {
     var AVERAGE_THROUGHPUT_SAMPLE_AMOUNT_LIVE = 2,
         AVERAGE_THROUGHPUT_SAMPLE_AMOUNT_VOD = 3;
 
-
     return {
         log: undefined,
         metricsExt: undefined,
         metricsModel: undefined,
-        manifestExt:undefined,
-        manifestModel:undefined,
+        manifestExt: undefined,
+        manifestModel: undefined,
 
         execute: function (context, callback) {
+            var mediaInfo = context.getMediaInfo(),
+                switchRequest =  new MediaPlayer.rules.SwitchRequest(MediaPlayer.rules.SwitchRequest.prototype.NO_CHANGE, MediaPlayer.rules.SwitchRequest.prototype.WEAK),
+                streamProcessor = context.getStreamProcessor(),
+                abrController = streamProcessor.getABRController();
+
+            if (mediaInfo.type === "video") {
+                var websocket = streamProcessor.getWebsocket();
+                var bandwidth = websocket.getBandwidth();
+                // if (currentBandwidth === bandwidth) {
+                //     this.log("XXXXXXXX no change, bandwidth: " + bandwidth + "\n");
+                //     callback(switchRequest);
+                //     return;
+                // }
+                var newQ = abrController.getQualityForBitrate(mediaInfo, bandwidth);
+                switchRequest = new MediaPlayer.rules.SwitchRequest(newQ, MediaPlayer.rules.SwitchRequest.prototype.DEFAULT);
+                callback(switchRequest);
+                return;
+            }
+
             var self = this,
-                mediaInfo = context.getMediaInfo(),
+                //mediaInfo = context.getMediaInfo(),
                 mediaType = mediaInfo.type,
                 current = context.getCurrentValue(),
                 metrics = self.metricsModel.getReadOnlyMetricsFor(mediaType),
-                streamProcessor = context.getStreamProcessor(),
-                abrController = streamProcessor.getABRController(),
-                isDynamic= streamProcessor.isDynamic(),
-                switchRequest =  new MediaPlayer.rules.SwitchRequest(MediaPlayer.rules.SwitchRequest.prototype.NO_CHANGE, MediaPlayer.rules.SwitchRequest.prototype.WEAK);
+                //streamProcessor = context.getStreamProcessor(),
+                //abrController = streamProcessor.getABRController(),
+                isDynamic= streamProcessor.isDynamic();
+                //switchRequest =  new MediaPlayer.rules.SwitchRequest(MediaPlayer.rules.SwitchRequest.prototype.NO_CHANGE, MediaPlayer.rules.SwitchRequest.prototype.WEAK);
 
             if ( (metrics.BufferState.length === 0) || (metrics.BufferLevel.length === 0) ) {
                 callback(switchRequest);
