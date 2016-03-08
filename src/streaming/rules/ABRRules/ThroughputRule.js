@@ -55,14 +55,14 @@ MediaPlayer.rules.ThroughputRule = function () {
 
             if (mediaInfo.type === "video") {
                 var websocket = streamProcessor.getWebsocket();
-                var bandwidth = websocket.getBandwidth();
+                var bandwidth = websocket.getBandwidth() / 1000;
                 // if (currentBandwidth === bandwidth) {
                 //     this.log("XXXXXXXX no change, bandwidth: " + bandwidth + "\n");
                 //     callback(switchRequest);
                 //     return;
                 // }
                 var newQ = abrController.getQualityForBitrate(mediaInfo, bandwidth);
-                switchRequest = new MediaPlayer.rules.SwitchRequest(newQ, MediaPlayer.rules.SwitchRequest.prototype.DEFAULT);
+                switchRequest = new MediaPlayer.rules.SwitchRequest(newQ, MediaPlayer.rules.SwitchRequest.prototype.STRONG);
                 callback(switchRequest);
                 return;
             }
