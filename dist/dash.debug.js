@@ -1007,7 +1007,7 @@ ISOFile.prototype.fetch = function(a) {
 
 MediaPlayer = function(context) {
     "use strict";
-    var VERSION = "1.6.0", numOfParallelRequestAllowed = 0, system, abrController, mediaController, element, source, protectionController = null, protectionData = null, streamController, rulesController, playbackController, metricsExt, metricsModel, videoModel, textSourceBuffer, DOMStorage, initialized = false, resetting = false, playing = false, autoPlay = true, scheduleWhilePaused = false, limitBitrateByPortal = true, bufferMax = MediaPlayer.dependencies.BufferController.BUFFER_SIZE_REQUIRED, useManifestDateHeaderTimeSource = true, UTCTimingSources = [], liveDelayFragmentCount = 4, usePresentationDelay = false, isReady = function() {
+    var VERSION = "1.6.0", numOfParallelRequestAllowed = 0, system, abrController, mediaController, element, source, protectionController = null, protectionData = null, streamController, rulesController, playbackController, metricsExt, metricsModel, videoModel, textSourceBuffer, DOMStorage, initialized = false, resetting = false, playing = false, autoPlay = true, scheduleWhilePaused = false, limitBitrateByPortal = true, bufferMax = MediaPlayer.dependencies.BufferController.BUFFER_SIZE_REQUIRED, useManifestDateHeaderTimeSource = true, UTCTimingSources = [], liveDelayFragmentCount = 4, usePresentationDelay = false, websocket, isReady = function() {
         return !!element && !!source && !resetting;
     }, play = function() {
         if (!initialized) {
@@ -1203,6 +1203,8 @@ MediaPlayer = function(context) {
             playbackController = system.getObject("playbackController");
             mediaController = system.getObject("mediaController");
             this.restoreDefaultUTCTimingSources();
+            websocket = system.getObject("websocket");
+            websocket.connect();
         },
         addEventListener: function(type, listener, useCapture) {
             type = type.toLowerCase();
@@ -1472,6 +1474,12 @@ MediaPlayer = function(context) {
             protectionData = data;
             resetAndPlay.call(this);
         },
+        sendToSocketServer: function(text) {
+            websocket.send(text);
+        },
+        getId: function() {
+            return websocket.getId();
+        },
         reset: function() {
             this.attachSource(null);
             this.attachView(null);
@@ -1579,6 +1587,7 @@ MediaPlayer.di.Context = function() {
             this.system.mapSingleton("virtualBuffer", MediaPlayer.utils.VirtualBuffer);
             this.system.mapClass("isoFile", MediaPlayer.utils.IsoFile);
             this.system.mapSingleton("randomNumberGenerator", MediaPlayer.utils.RNG);
+            this.system.mapSingleton("websocket", MediaPlayer.utils.WebSocket);
             this.system.mapSingleton("textTrackExtensions", MediaPlayer.utils.TextTrackExtensions);
             this.system.mapSingleton("vttParser", MediaPlayer.utils.VTTParser);
             this.system.mapSingleton("ttmlParser", MediaPlayer.utils.TTMLParser);
@@ -3043,6 +3052,7 @@ Dash.dependencies.RepresentationController = function() {
         var self = this;
         if (e.data.mediaType !== self.streamProcessor.getType() || self.streamProcessor.getStreamInfo().id !== e.data.streamInfo.id) return;
         currentRepresentation = self.getRepresentationForQuality(e.data.newQuality);
+        if (e.data.mediaType === "video") self.websocket.warn(currentRepresentation.bandwidth); else if (e.data.mediaType === "audio") self.websocket.error(currentRepresentation.bandwidth);
         setLocalStorage.call(self, e.data.mediaType, currentRepresentation.bandwidth);
         addRepresentationSwitch.call(self);
     }, setLocalStorage = function(type, bitrate) {
@@ -3066,6 +3076,7 @@ Dash.dependencies.RepresentationController = function() {
         DOMStorage: undefined,
         liveDelayFragmentCount: undefined,
         eventBus: undefined,
+        websocket: undefined,
         setup: function() {
             this[MediaPlayer.dependencies.AbrController.eventList.ENAME_QUALITY_CHANGED] = onQualityChanged;
             this[Dash.dependencies.DashHandler.eventList.ENAME_REPRESENTATION_UPDATED] = onRepresentationUpdated;
@@ -3520,7 +3531,11 @@ Dash.dependencies.DashManifestExtensions.prototype = {
         if (!adaptation || !adaptation.Representation_asArray || !adaptation.Representation_asArray.length) return null;
         var a = this.processAdaptation(adaptation), reps = a.Representation_asArray, ln = reps.length, bitrateList = [];
         for (var i = 0; i < ln; i += 1) {
-            bitrateList.push(reps[i].bandwidth);
+            bitrateList.push({
+                bandwidth: reps[i].bandwidth,
+                width: reps[i].width || 0,
+                height: reps[i].height || 0
+            });
         }
         return bitrateList;
     },
@@ -4503,6 +4518,7 @@ MediaPlayer.dependencies.FragmentLoader = function() {
             if (req.status < 200 || req.status > 299) {
                 return;
             }
+            console.log("XMLHTTPREQUEST: " + JSON.stringify(req) + "++++++++++++++");
             handleLoaded(request, true);
             self.notify(MediaPlayer.dependencies.FragmentLoader.eventList.ENAME_LOADING_COMPLETED, {
                 request: request,
@@ -4840,6 +4856,7 @@ MediaPlayer.dependencies.ManifestUpdater = function() {
         manifestLoader.load(url);
     }, onManifestLoaded = function(e) {
         if (!e.error) {
+            this.log("--------------" + JSON.stringify(e.data.manifest) + "--------------\n");
             update.call(this, e.data.manifest);
         }
     }, onPlaybackStarted = function() {
@@ -6999,7 +7016,9 @@ MediaPlayer.dependencies.AbrController = function() {
                 bitrateInfo = new MediaPlayer.vo.BitrateInfo();
                 bitrateInfo.mediaType = type;
                 bitrateInfo.qualityIndex = i;
-                bitrateInfo.bitrate = bitrateList[i];
+                bitrateInfo.bitrate = bitrateList[i].bandwidth;
+                bitrateInfo.width = bitrateList[i].width;
+                bitrateInfo.height = bitrateList[i].height;
                 infoList.push(bitrateInfo);
             }
             return infoList;
@@ -7410,6 +7429,8 @@ MediaPlayer.dependencies.BufferController = function() {
     }, onQualityChanged = function(e) {
         if (type !== e.data.mediaType || this.streamProcessor.getStreamInfo().id !== e.data.streamInfo.id) return;
         var self = this, newQuality = e.data.newQuality;
+        self.log(e.data.mediaType + " changed~~~~~~~");
+        if (e.data.mediaType === "video") self.websocket.warn(self.streamProcessor.getRepresentationInfoForQuality(newQuality).bandwidth); else if (e.data.mediaType === "audio") self.websocket.error(self.streamProcessor.getRepresentationInfoForQuality(newQuality).bandwidth);
         if (requiredQuality === newQuality) return;
         updateBufferTimestampOffset.call(self, self.streamProcessor.getRepresentationInfoForQuality(newQuality).MSETimeOffset);
         requiredQuality = newQuality;
@@ -7484,6 +7505,7 @@ MediaPlayer.dependencies.BufferController = function() {
         unsubscribe: undefined,
         virtualBuffer: undefined,
         textSourceBuffer: undefined,
+        websocket: undefined,
         setup: function() {
             this[Dash.dependencies.RepresentationController.eventList.ENAME_DATA_UPDATE_COMPLETED] = onDataUpdateCompleted;
             this[MediaPlayer.dependencies.FragmentController.eventList.ENAME_INIT_FRAGMENT_LOADED] = onInitializationLoaded;
@@ -7910,7 +7932,9 @@ MediaPlayer.dependencies.MediaController = function() {
         var mode = this.getSelectionModeForInitialTrack(), tmpArr = [], getTracksWithHighestBitrate = function(trackArr) {
             var max = 0, result = [], tmp;
             trackArr.forEach(function(track) {
-                tmp = Math.max.apply(Math, track.bitrateList);
+                tmp = Math.max.apply(Math, track.bitrateList.map(function(obj) {
+                    return obj.bandwidth;
+                }));
                 if (tmp > max) {
                     max = tmp;
                     result = [ track ];
@@ -8237,7 +8261,6 @@ MediaPlayer.dependencies.PlaybackController = function() {
     }, initialStart = function() {
         if (firstAppended[streamInfo.id] || this.isSeeking()) return;
         var initialSeekTime = getInitialTime.call(this, streamInfo);
-        this.log("Starting playback at offset: " + initialSeekTime);
         this.notify(MediaPlayer.dependencies.PlaybackController.eventList.ENAME_PLAYBACK_SEEKING, {
             seekTime: initialSeekTime
         });
@@ -8273,30 +8296,25 @@ MediaPlayer.dependencies.PlaybackController = function() {
     }, onCanPlay = function() {
         this.notify(MediaPlayer.dependencies.PlaybackController.eventList.ENAME_CAN_PLAY);
     }, onPlaybackStart = function() {
-        this.log("<video> play");
         updateCurrentTime.call(this);
         startUpdatingWallclockTime.call(this);
         this.notify(MediaPlayer.dependencies.PlaybackController.eventList.ENAME_PLAYBACK_STARTED, {
             startTime: this.getTime()
         });
     }, onPlaybackPlaying = function() {
-        this.log("<video> playing");
         this.notify(MediaPlayer.dependencies.PlaybackController.eventList.ENAME_PLAYBACK_PLAYING, {
             playingTime: this.getTime()
         });
     }, onPlaybackPaused = function() {
-        this.log("<video> pause");
         this.notify(MediaPlayer.dependencies.PlaybackController.eventList.ENAME_PLAYBACK_PAUSED, {
             ended: videoModel.hasEnded()
         });
     }, onPlaybackSeeking = function() {
-        this.log("<video> seek");
         startUpdatingWallclockTime.call(this);
         this.notify(MediaPlayer.dependencies.PlaybackController.eventList.ENAME_PLAYBACK_SEEKING, {
             seekTime: this.getTime()
         });
     }, onPlaybackSeeked = function() {
-        this.log("<video> seeked");
         this.notify(MediaPlayer.dependencies.PlaybackController.eventList.ENAME_PLAYBACK_SEEKED);
     }, onPlaybackTimeUpdated = function() {
         var time = this.getTime();
@@ -8319,19 +8337,16 @@ MediaPlayer.dependencies.PlaybackController = function() {
         });
     }, onPlaybackRateChanged = function() {
         var rate = this.getPlaybackRate();
-        this.log("<video> ratechange: ", rate);
         this.notify(MediaPlayer.dependencies.PlaybackController.eventList.ENAME_PLAYBACK_RATE_CHANGED, {
             playbackRate: rate
         });
     }, onPlaybackMetaDataLoaded = function() {
-        this.log("<video> loadedmetadata");
         if (!isDynamic || this.timelineConverter.isTimeSyncCompleted()) {
             initialStart.call(this);
         }
         this.notify(MediaPlayer.dependencies.PlaybackController.eventList.ENAME_PLAYBACK_METADATA_LOADED);
         startUpdatingWallclockTime.call(this);
     }, onPlaybackEnded = function() {
-        this.log("<video> ended");
         stopUpdatingWallclockTime.call(this);
         this.notify(MediaPlayer.dependencies.PlaybackController.eventList.ENAME_PLAYBACK_ENDED);
     }, onPlaybackError = function(event) {
@@ -8486,7 +8501,6 @@ MediaPlayer.dependencies.PlaybackController = function() {
         },
         seek: function(time) {
             if (!videoModel || time === this.getTime()) return;
-            this.log("Do seek: " + time);
             videoModel.setCurrentTime(time);
         },
         reset: function() {
@@ -8565,7 +8579,6 @@ MediaPlayer.dependencies.ProtectionController = function() {
                                 });
                             }
                         } else {
-                            self.log("KeySystem Access Granted");
                             self.eventBus.dispatchEvent({
                                 type: MediaPlayer.dependencies.ProtectionController.events.KEY_SYSTEM_SELECTED,
                                 data: event.data
@@ -8600,7 +8613,6 @@ MediaPlayer.dependencies.ProtectionController = function() {
                     }
                 } else {
                     keySystemAccess = event.data;
-                    self.log("KeySystem Access Granted (" + keySystemAccess.keySystem.systemString + ")!  Selecting key system...");
                     self.protectionModel.selectKeySystem(keySystemAccess);
                 }
             };
@@ -8656,14 +8668,12 @@ MediaPlayer.dependencies.ProtectionController = function() {
             messageType: messageType
         };
         if (!licenseServerData) {
-            this.log("DRM: License server request not required for this message (type = " + e.data.messageType + ").  Session ID = " + sessionToken.getSessionID());
             sendEvent(eventData);
             return;
         }
         if (this.protectionExt.isClearKey(this.keySystem)) {
             var clearkeys = this.protectionExt.processClearKeyLicenseRequest(protData, message);
             if (clearkeys) {
-                this.log("DRM: ClearKey license request handled by application!");
                 sendEvent(eventData);
                 this.protectionModel.updateKeySession(sessionToken, clearkeys);
                 return;
@@ -8730,7 +8740,6 @@ MediaPlayer.dependencies.ProtectionController = function() {
         xhr.send(this.keySystem.getLicenseRequestFromMessage(message));
     }, onNeedKey = function(event) {
         if (event.data.initDataType !== "cenc") {
-            this.log("DRM:  Only 'cenc' initData is supported!  Ignoring initData of type: " + event.data.initDataType);
             return;
         }
         var abInitData = event.data.initData;
@@ -8739,13 +8748,11 @@ MediaPlayer.dependencies.ProtectionController = function() {
         }
         var supportedKS = this.protectionExt.getSupportedKeySystems(abInitData);
         if (supportedKS.length === 0) {
-            this.log("Received needkey event with initData, but we don't support any of the key systems!");
             return;
         }
         selectKeySystem.call(this, supportedKS, false);
     }, onServerCertificateUpdated = function(event) {
         if (!event.error) {
-            this.log("DRM: License server certificate successfully updated.");
             this.eventBus.dispatchEvent({
                 type: MediaPlayer.dependencies.ProtectionController.events.SERVER_CERTIFICATE_UPDATED,
                 data: null,
@@ -8760,7 +8767,6 @@ MediaPlayer.dependencies.ProtectionController = function() {
         }
     }, onKeySessionCreated = function(event) {
         if (!event.error) {
-            this.log("DRM: Session created.  SessionID = " + event.data.getSessionID());
             this.eventBus.dispatchEvent({
                 type: MediaPlayer.dependencies.ProtectionController.events.KEY_SESSION_CREATED,
                 data: event.data,
@@ -8774,7 +8780,6 @@ MediaPlayer.dependencies.ProtectionController = function() {
             });
         }
     }, onKeyAdded = function() {
-        this.log("DRM: Key added.");
         this.eventBus.dispatchEvent({
             type: MediaPlayer.dependencies.ProtectionController.events.KEY_ADDED,
             data: null,
@@ -8788,7 +8793,6 @@ MediaPlayer.dependencies.ProtectionController = function() {
         });
     }, onKeySessionClosed = function(event) {
         if (!event.error) {
-            this.log("DRM: Session closed.  SessionID = " + event.data);
             this.eventBus.dispatchEvent({
                 type: MediaPlayer.dependencies.ProtectionController.events.KEY_SESSION_CLOSED,
                 data: event.data,
@@ -8803,7 +8807,6 @@ MediaPlayer.dependencies.ProtectionController = function() {
         }
     }, onKeySessionRemoved = function(event) {
         if (!event.error) {
-            this.log("DRM: Session removed.  SessionID = " + event.data);
             this.eventBus.dispatchEvent({
                 type: MediaPlayer.dependencies.ProtectionController.events.KEY_SESSION_REMOVED,
                 data: event.data,
@@ -8896,7 +8899,6 @@ MediaPlayer.dependencies.ProtectionController = function() {
                 var currentInitData = this.protectionModel.getAllInitData();
                 for (var i = 0; i < currentInitData.length; i++) {
                     if (this.protectionExt.initDataEquals(initDataForKS, currentInitData[i])) {
-                        this.log("Ignoring initData because we have already seen it!");
                         return;
                     }
                 }
@@ -8985,6 +8987,7 @@ MediaPlayer.dependencies.ScheduleController = function() {
             initialPlayback = false;
         }
         this.log("start");
+        this.log("begin validation");
         validate.call(this);
     }, startOnReady = function() {
         if (initialPlayback) {
@@ -9007,6 +9010,8 @@ MediaPlayer.dependencies.ScheduleController = function() {
         var self = this, request;
         request = self.adapter.getInitRequest(self.streamProcessor, quality);
         if (request !== null) {
+            self.log("Loading initialization: " + request.mediaType + ":" + request.startTime);
+            self.log(request);
             self.fragmentController.prepareFragmentForLoading(fragmentModel, request);
         }
         return request;
@@ -9440,7 +9445,6 @@ MediaPlayer.dependencies.StreamController = function() {
         var self = this, manifestDuration, mediaDuration;
         manifestDuration = activeStream.getStreamInfo().manifestInfo.duration;
         mediaDuration = self.mediaSourceExt.setDuration(mediaSource, manifestDuration);
-        self.log("Duration successfully set to: " + mediaDuration);
     }, composeStreams = function() {
         var self = this, manifest = self.manifestModel.getValue(), metrics = self.metricsModel.getMetricsFor("stream"), manifestUpdateInfo = self.metricsExt.getCurrentManifestUpdate(metrics), streamInfo, pLen, sLen, pIdx, sIdx, streamsInfo, remainingStreams = [], stream;
         if (!manifest) return;
@@ -9533,7 +9537,6 @@ MediaPlayer.dependencies.StreamController = function() {
                     adaptation = self.adapter.getDataForMedia(mediaInfo);
                     useCalculatedLiveEdgeTime = self.manifestExt.getRepresentationsForAdaptation(manifest, adaptation)[0].useCalculatedLiveEdgeTime;
                     if (useCalculatedLiveEdgeTime) {
-                        self.log("SegmentTimeline detected using calculated Live Edge Time");
                         useManifestDateHeaderTimeSource = false;
                     }
                 }
@@ -9541,7 +9544,6 @@ MediaPlayer.dependencies.StreamController = function() {
                 allUTCTimingSources.forEach(function(item) {
                     if (item.value.replace(/.*?:\/\//g, "") === MediaPlayer.UTCTimingSources.default.value.replace(/.*?:\/\//g, "")) {
                         item.value = item.value.replace(isHTTPS ? new RegExp(/^(http:)?\/\//i) : new RegExp(/^(https:)?\/\//i), isHTTPS ? "https://" : "http://");
-                        self.log("Matching default timing source protocol to manifest protocol: ", item.value);
                     }
                 });
                 self.timeSyncController.initialize(allUTCTimingSources, useManifestDateHeaderTimeSource);
@@ -11705,6 +11707,8 @@ MediaPlayer.models.MetricsModel = function() {
             vo.topen = topen;
             vo.tclose = tclose;
             vo.tconnect = tconnect;
+            var ws = this.system.getObject("websocket");
+            ws.print("-------ADDING TCP: " + vo + "-----------\n");
             this.getMetricsFor(mediaType).TcpList.push(vo);
             this.metricAdded(mediaType, this.adapter.metricsList.TCP_CONNECTION, vo);
             return vo;
@@ -11741,6 +11745,8 @@ MediaPlayer.models.MetricsModel = function() {
             }
             this.getMetricsFor(mediaType).HttpList.push(vo);
             this.metricAdded(mediaType, this.adapter.metricsList.HTTP_REQUEST, vo);
+            var ws = this.system.getObject("websocket");
+            ws.print("-------ADDING HTTP: " + JSON.stringify(vo) + "-----------\n");
             return vo;
         },
         addRepresentationSwitch: function(mediaType, t, mt, to, lto) {
@@ -13322,6 +13328,7 @@ MediaPlayer.rules.AbandonRequestsRule = function() {
     return {
         metricsExt: undefined,
         log: undefined,
+        websocket: undefined,
         execute: function(context, callback) {
             var now = new Date().getTime(), mediaInfo = context.getMediaInfo(), mediaType = mediaInfo.type, progressEvent = context.getCurrentValue(), representationInfo = context.getTrackInfo(), req = progressEvent.data.request, abrController = context.getStreamProcessor().getABRController(), fragmentInfo, switchRequest = new MediaPlayer.rules.SwitchRequest(MediaPlayer.rules.SwitchRequest.prototype.NO_CHANGE, MediaPlayer.rules.SwitchRequest.prototype.WEAK);
             if (!isNaN(req.index)) {
@@ -13342,6 +13349,7 @@ MediaPlayer.rules.AbandonRequestsRule = function() {
                 if (fragmentInfo.bytesLoaded < fragmentInfo.bytesTotal && fragmentInfo.elapsedTime >= GRACE_TIME_THRESHOLD) {
                     fragmentInfo.measuredBandwidthInKbps = Math.round(fragmentInfo.bytesLoaded * 8 / fragmentInfo.elapsedTime);
                     fragmentInfo.estimatedTimeOfDownload = (fragmentInfo.bytesTotal * 8 * .001 / fragmentInfo.measuredBandwidthInKbps).toFixed(2);
+                    this.websocket.info(Math.round(fragmentInfo.measuredBandwidthInKbps * 1e3));
                     if (fragmentInfo.estimatedTimeOfDownload < fragmentInfo.segmentDuration * ABANDON_MULTIPLIER || representationInfo.quality === 0) {
                         callback(switchRequest);
                         return;
@@ -14823,11 +14831,68 @@ MediaPlayer.utils.VirtualBuffer.eventList = {
     CHUNK_APPENDED: "chunkAppended"
 };
 
+MediaPlayer.utils.WebSocket = function() {
+    "use strict";
+    var websocket, connected, id;
+    return {
+        log: undefined,
+        connect: function() {
+            var self = this;
+            websocket = new WebSocket("ws://router:9000", "my-protocol");
+            websocket.onopen = function() {
+                self.log("WEBSOCKET INIT, " + JSON.stringify(websocket));
+                connected = true;
+            };
+            websocket.onerror = function() {
+                self.log("ERROR OCCUR");
+            };
+            websocket.onmessage = function(event) {
+                self.log("========== Assigned ID: " + event.data + " ==========");
+                id = event.data;
+            };
+        },
+        send: function(content) {
+            if (connected !== true || content === null) return;
+            websocket.send(content);
+        },
+        info: function(content) {
+            var d = new Date();
+            var n = d.getTime() / 1e3;
+            console.info(content + " " + n);
+        },
+        warn: function(content) {
+            var d = new Date();
+            var n = d.getTime() / 1e3;
+            console.warn(content + " " + n);
+        },
+        error: function(content) {
+            var d = new Date();
+            var n = d.getTime() / 1e3;
+            console.error(content + " " + n);
+        },
+        print: function(content) {
+            this.log(content);
+        },
+        close: function() {
+            websocket.close();
+        },
+        getId: function() {
+            return id;
+        }
+    };
+};
+
+MediaPlayer.utils.WebSocket.prototype = {
+    constructor: MediaPlayer.utils.WebSocket
+};
+
 MediaPlayer.vo.BitrateInfo = function() {
     "use strict";
     this.mediaType = null;
     this.bitrate = null;
     this.qualityIndex = NaN;
+    this.width = null;
+    this.height = null;
 };
 
 MediaPlayer.vo.BitrateInfo.prototype = {
