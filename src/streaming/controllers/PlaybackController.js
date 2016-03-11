@@ -177,6 +177,7 @@ MediaPlayer.dependencies.PlaybackController = function () {
 
         onPlaybackPlaying = function() {
             //this.log("<video> playing");
+            this.websocket.error("PLAYING");
             this.notify(MediaPlayer.dependencies.PlaybackController.eventList.ENAME_PLAYBACK_PLAYING, {playingTime: this.getTime()});
         },
 
@@ -336,6 +337,7 @@ MediaPlayer.dependencies.PlaybackController = function () {
         subscribe: undefined,
         unsubscribe: undefined,
         adapter: undefined,
+        websocket: undefined,
 
         setup: function() {
             this[Dash.dependencies.RepresentationController.eventList.ENAME_DATA_UPDATE_COMPLETED] = onDataUpdateCompleted;

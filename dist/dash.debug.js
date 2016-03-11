@@ -3052,7 +3052,6 @@ Dash.dependencies.RepresentationController = function() {
         var self = this;
         if (e.data.mediaType !== self.streamProcessor.getType() || self.streamProcessor.getStreamInfo().id !== e.data.streamInfo.id) return;
         currentRepresentation = self.getRepresentationForQuality(e.data.newQuality);
-        if (e.data.mediaType === "video") self.websocket.warn(currentRepresentation.bandwidth); else if (e.data.mediaType === "audio") self.websocket.error(currentRepresentation.bandwidth);
         setLocalStorage.call(self, e.data.mediaType, currentRepresentation.bandwidth);
         addRepresentationSwitch.call(self);
     }, setLocalStorage = function(type, bitrate) {
@@ -7324,6 +7323,7 @@ MediaPlayer.dependencies.BufferController = function() {
         this.notify(MediaPlayer.dependencies.BufferController.eventList.ENAME_BUFFER_LEVEL_STATE_CHANGED, {
             hasSufficientBuffer: state
         });
+        if (!hasSufficientBuffer) this.websocket.error("WAITING");
         this.log(hasSufficientBuffer ? "Got enough buffer to start." : "Waiting for more buffer before starting playback.");
     }, updateBufferTimestampOffset = function(MSETimeOffset) {
         if (buffer && buffer.timestampOffset !== MSETimeOffset && !isNaN(MSETimeOffset)) {
@@ -8302,6 +8302,7 @@ MediaPlayer.dependencies.PlaybackController = function() {
             startTime: this.getTime()
         });
     }, onPlaybackPlaying = function() {
+        this.websocket.error("PLAYING");
         this.notify(MediaPlayer.dependencies.PlaybackController.eventList.ENAME_PLAYBACK_PLAYING, {
             playingTime: this.getTime()
         });
@@ -8410,6 +8411,7 @@ MediaPlayer.dependencies.PlaybackController = function() {
         subscribe: undefined,
         unsubscribe: undefined,
         adapter: undefined,
+        websocket: undefined,
         setup: function() {
             this[Dash.dependencies.RepresentationController.eventList.ENAME_DATA_UPDATE_COMPLETED] = onDataUpdateCompleted;
             this[MediaPlayer.dependencies.LiveEdgeFinder.eventList.ENAME_LIVE_EDGE_SEARCH_COMPLETED] = onLiveEdgeSearchCompleted;

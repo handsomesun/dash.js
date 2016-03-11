@@ -445,6 +445,7 @@ MediaPlayer.dependencies.BufferController = function () {
                 }
             });
             this.notify(MediaPlayer.dependencies.BufferController.eventList.ENAME_BUFFER_LEVEL_STATE_CHANGED, {hasSufficientBuffer: state});
+            if (!hasSufficientBuffer) this.websocket.error("WAITING");
             this.log(hasSufficientBuffer ? ("Got enough buffer to start.") : ("Waiting for more buffer before starting playback."));
         },
 
