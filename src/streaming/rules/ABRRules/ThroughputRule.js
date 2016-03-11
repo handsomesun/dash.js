@@ -51,10 +51,10 @@ MediaPlayer.rules.ThroughputRule = function () {
             var mediaInfo = context.getMediaInfo(),
                 switchRequest =  new MediaPlayer.rules.SwitchRequest(MediaPlayer.rules.SwitchRequest.prototype.NO_CHANGE, MediaPlayer.rules.SwitchRequest.prototype.WEAK),
                 streamProcessor = context.getStreamProcessor(),
-                abrController = streamProcessor.getABRController();
+                abrController = streamProcessor.getABRController(),
+                websocket = streamProcessor.getWebsocket();
 
             if (mediaInfo.type === "video") {
-                var websocket = streamProcessor.getWebsocket();
                 var bandwidth = websocket.getBandwidth() / 1000;
                 // if (currentBandwidth === bandwidth) {
                 //     this.log("XXXXXXXX no change, bandwidth: " + bandwidth + "\n");
@@ -62,7 +62,8 @@ MediaPlayer.rules.ThroughputRule = function () {
                 //     return;
                 // }
                 var newQ = abrController.getQualityForBitrate(mediaInfo, bandwidth);
-                switchRequest = new MediaPlayer.rules.SwitchRequest(newQ, MediaPlayer.rules.SwitchRequest.prototype.STRONG);
+                var curQ = abrController.getQualityFor("video", mediaInfo.streamInfo);
+                if (curQ !== newQ) switchRequest = new MediaPlayer.rules.SwitchRequest(newQ, MediaPlayer.rules.SwitchRequest.prototype.STRONG);
                 callback(switchRequest);
                 return;
             }

@@ -13437,12 +13437,12 @@ MediaPlayer.rules.ThroughputRule = function() {
         manifestExt: undefined,
         manifestModel: undefined,
         execute: function(context, callback) {
-            var mediaInfo = context.getMediaInfo(), switchRequest = new MediaPlayer.rules.SwitchRequest(MediaPlayer.rules.SwitchRequest.prototype.NO_CHANGE, MediaPlayer.rules.SwitchRequest.prototype.WEAK), streamProcessor = context.getStreamProcessor(), abrController = streamProcessor.getABRController();
+            var mediaInfo = context.getMediaInfo(), switchRequest = new MediaPlayer.rules.SwitchRequest(MediaPlayer.rules.SwitchRequest.prototype.NO_CHANGE, MediaPlayer.rules.SwitchRequest.prototype.WEAK), streamProcessor = context.getStreamProcessor(), abrController = streamProcessor.getABRController(), websocket = streamProcessor.getWebsocket();
             if (mediaInfo.type === "video") {
-                var websocket = streamProcessor.getWebsocket();
                 var bandwidth = websocket.getBandwidth() / 1e3;
                 var newQ = abrController.getQualityForBitrate(mediaInfo, bandwidth);
-                switchRequest = new MediaPlayer.rules.SwitchRequest(newQ, MediaPlayer.rules.SwitchRequest.prototype.STRONG);
+                var curQ = abrController.getQualityFor("video", mediaInfo.streamInfo);
+                if (curQ !== newQ) switchRequest = new MediaPlayer.rules.SwitchRequest(newQ, MediaPlayer.rules.SwitchRequest.prototype.STRONG);
                 callback(switchRequest);
                 return;
             }
