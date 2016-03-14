@@ -3052,6 +3052,7 @@ Dash.dependencies.RepresentationController = function() {
         var self = this;
         if (e.data.mediaType !== self.streamProcessor.getType() || self.streamProcessor.getStreamInfo().id !== e.data.streamInfo.id) return;
         currentRepresentation = self.getRepresentationForQuality(e.data.newQuality);
+        if (e.data.mediaType === "video") self.websocket.warn(currentRepresentation.bandwidth);
         setLocalStorage.call(self, e.data.mediaType, currentRepresentation.bandwidth);
         addRepresentationSwitch.call(self);
     }, setLocalStorage = function(type, bitrate) {
@@ -7328,6 +7329,7 @@ MediaPlayer.dependencies.BufferController = function() {
         this.notify(MediaPlayer.dependencies.BufferController.eventList.ENAME_BUFFER_LEVEL_STATE_CHANGED, {
             hasSufficientBuffer: state
         });
+        if (!hasSufficientBuffer) this.websocket.error("WAITING");
         this.log(hasSufficientBuffer ? "Got enough buffer to start." : "Waiting for more buffer before starting playback.");
     }, updateBufferTimestampOffset = function(MSETimeOffset) {
         if (buffer && buffer.timestampOffset !== MSETimeOffset && !isNaN(MSETimeOffset)) {
@@ -8307,6 +8309,7 @@ MediaPlayer.dependencies.PlaybackController = function() {
             startTime: this.getTime()
         });
     }, onPlaybackPlaying = function() {
+        this.websocket.error("PLAYING");
         this.notify(MediaPlayer.dependencies.PlaybackController.eventList.ENAME_PLAYBACK_PLAYING, {
             playingTime: this.getTime()
         });
@@ -8415,6 +8418,7 @@ MediaPlayer.dependencies.PlaybackController = function() {
         subscribe: undefined,
         unsubscribe: undefined,
         adapter: undefined,
+        websocket: undefined,
         setup: function() {
             this[Dash.dependencies.RepresentationController.eventList.ENAME_DATA_UPDATE_COMPLETED] = onDataUpdateCompleted;
             this[MediaPlayer.dependencies.LiveEdgeFinder.eventList.ENAME_LIVE_EDGE_SEARCH_COMPLETED] = onLiveEdgeSearchCompleted;
@@ -11751,11 +11755,7 @@ MediaPlayer.models.MetricsModel = function() {
             this.getMetricsFor(mediaType).HttpList.push(vo);
             this.metricAdded(mediaType, this.adapter.metricsList.HTTP_REQUEST, vo);
             var ws = this.system.getObject("websocket");
-            ws.print("-------ADDING HTTP: " + JSON.stringify(vo) + "-----------38\n");
-            if (mediaType === "video") {
-                var curBR = vo._bytes * 8 / vo._mediaduration;
-                ws.error(curBR);
-            }
+            ws.print("-------ADDING HTTP: " + JSON.stringify(vo) + "-----------44\n");
             return vo;
         },
         addRepresentationSwitch: function(mediaType, t, mt, to, lto) {
@@ -14864,6 +14864,7 @@ MediaPlayer.utils.WebSocket = function() {
                 if (event.data.length === 0) return;
                 if (event.data[0] === "B") {
                     bandwidth = Number(event.data.substr(1));
+                    console.log("SETTING BW TO " + bandwidth);
                 } else {
                     self.log("========== Assigned ID: " + event.data + " ==========");
                     id = event.data;
@@ -14899,7 +14900,7 @@ MediaPlayer.utils.WebSocket = function() {
             return id;
         },
         getBandwidth: function() {
-            return bandwidth - 32e4;
+            return bandwidth;
         }
     };
 };

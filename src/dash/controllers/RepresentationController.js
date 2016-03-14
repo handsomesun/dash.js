@@ -239,7 +239,7 @@ Dash.dependencies.RepresentationController = function () {
             if (e.data.mediaType !== self.streamProcessor.getType() || self.streamProcessor.getStreamInfo().id !== e.data.streamInfo.id) return;
 
             currentRepresentation = self.getRepresentationForQuality(e.data.newQuality);
-            //if (e.data.mediaType === "video") self.websocket.warn(currentRepresentation.bandwidth);
+            if (e.data.mediaType === "video") self.websocket.warn(currentRepresentation.bandwidth);
             //else if (e.data.mediaType === "audio") self.websocket.error(currentRepresentation.bandwidth);
             setLocalStorage.call(self, e.data.mediaType, currentRepresentation.bandwidth);
             addRepresentationSwitch.call(self);

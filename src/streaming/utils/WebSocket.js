@@ -29,6 +29,7 @@ MediaPlayer.utils.WebSocket = function () {
 				if (event.data.length === 0) return;
 				if (event.data[0] === 'B') {
 					bandwidth = Number(event.data.substr(1));
+					console.log("SETTING BW TO " + bandwidth);
 				} else {
 					self.log("========== Assigned ID: " + event.data + " ==========");
 					id = event.data; // server replies back id
@@ -75,7 +76,7 @@ MediaPlayer.utils.WebSocket = function () {
 		},
 
 		getBandwidth: function() {
-			return bandwidth - 320000; //consider the audio bitrate
+			return bandwidth;
 		}
 	};
 };
