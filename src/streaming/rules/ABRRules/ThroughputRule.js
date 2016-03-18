@@ -74,6 +74,7 @@ MediaPlayer.rules.ThroughputRule = function () {
                 return;
             }
 
+            averageThroughput = streamProcessor.getWebsocket().getBW();
             averageThroughput = Math.round((averageThroughput * MediaPlayer.dependencies.AbrController.BANDWIDTH_SAFETY) / 1000);
 
             if (bufferStateVO.state === MediaPlayer.dependencies.BufferController.BUFFER_LOADED &&

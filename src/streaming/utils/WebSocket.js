@@ -6,7 +6,8 @@ MediaPlayer.utils.WebSocket = function () {
 	
 	var websocket,
 		connected,
-		id;
+		id,
+		BW = 0;
 
 	return {
 		log: undefined,
@@ -25,8 +26,14 @@ MediaPlayer.utils.WebSocket = function () {
 			};
 
 			websocket.onmessage = function(event) {
-				self.log("========== Assigned ID: " + event.data + " ==========");
-				id = event.data; // server replies back id
+				if (event.data.length === 0) return;
+				if (event.data[0] === 'B') {
+					BW = Number(event.data.substr(1));
+					console.log("SETTING BW TO " + BW);
+				} else {
+					self.log("========== Assigned ID: " + event.data + " ==========");
+					id = event.data; // server replies back id
+				}
 			};
 		},
 
@@ -66,6 +73,10 @@ MediaPlayer.utils.WebSocket = function () {
 
 		getId: function() {
 			return id;
+		},
+
+		getBW: function() {
+			return BW;
 		}
 	};
 };

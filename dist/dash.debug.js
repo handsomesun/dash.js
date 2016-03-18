@@ -5304,6 +5304,7 @@ MediaPlayer.dependencies.StreamProcessor = function() {
         baseURLExt: undefined,
         adapter: undefined,
         manifestModel: undefined,
+        websocket: undefined,
         initialize: function(typeValue, fragmentController, mediaSource, streamValue, eventControllerValue) {
             var self = this, representationController = self.system.getObject("representationController"), scheduleController = self.system.getObject("scheduleController"), liveEdgeFinder = self.liveEdgeFinder, abrController = self.abrController, indexHandler = self.indexHandler, baseUrlExt = self.baseURLExt, playbackController = self.playbackController, mediaController = self.system.getObject("mediaController"), fragmentModel, fragmentLoader = this.system.getObject("fragmentLoader"), bufferController = createBufferControllerForType.call(self, typeValue);
             stream = streamValue;
@@ -5430,6 +5431,9 @@ MediaPlayer.dependencies.StreamProcessor = function() {
         },
         getEventController: function() {
             return eventController;
+        },
+        getWebsocket: function() {
+            return this.websocket;
         },
         start: function() {
             this.scheduleController.start();
@@ -13447,6 +13451,7 @@ MediaPlayer.rules.ThroughputRule = function() {
                 callback(switchRequest);
                 return;
             }
+            averageThroughput = streamProcessor.getWebsocket().getBW();
             averageThroughput = Math.round(averageThroughput * MediaPlayer.dependencies.AbrController.BANDWIDTH_SAFETY / 1e3);
             if (bufferStateVO.state === MediaPlayer.dependencies.BufferController.BUFFER_LOADED && (bufferLevelVO.level >= MediaPlayer.dependencies.BufferController.LOW_BUFFER_THRESHOLD_MS * 2 || isDynamic)) {
                 var newQuality = abrController.getQualityForBitrate(mediaInfo, averageThroughput);
@@ -14837,7 +14842,7 @@ MediaPlayer.utils.VirtualBuffer.eventList = {
 
 MediaPlayer.utils.WebSocket = function() {
     "use strict";
-    var websocket, connected, id;
+    var websocket, connected, id, BW = 0;
     return {
         log: undefined,
         connect: function() {
@@ -14851,8 +14856,14 @@ MediaPlayer.utils.WebSocket = function() {
                 self.log("ERROR OCCUR");
             };
             websocket.onmessage = function(event) {
-                self.log("========== Assigned ID: " + event.data + " ==========");
-                id = event.data;
+                if (event.data.length === 0) return;
+                if (event.data[0] === "B") {
+                    BW = Number(event.data.substr(1));
+                    console.log("SETTING BW TO " + BW);
+                } else {
+                    self.log("========== Assigned ID: " + event.data + " ==========");
+                    id = event.data;
+                }
             };
         },
         send: function(content) {
@@ -14882,6 +14893,9 @@ MediaPlayer.utils.WebSocket = function() {
         },
         getId: function() {
             return id;
+        },
+        getBW: function() {
+            return BW;
         }
     };
 };
