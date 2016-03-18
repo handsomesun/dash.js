@@ -201,7 +201,7 @@ MediaPlayer.models.MetricsModel = function () {
 
             this.metricAdded(mediaType, this.adapter.metricsList.HTTP_REQUEST, vo);
             var ws = this.system.getObject("websocket");
-            ws.print("-------ADDING HTTP: " + JSON.stringify(vo) + "-----------\n");
+            ws.print("-------ADDING HTTP: " + JSON.stringify(vo) + "-----------finally\n");
             return vo;
         },
 

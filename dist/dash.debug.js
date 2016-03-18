@@ -11749,7 +11749,7 @@ MediaPlayer.models.MetricsModel = function() {
             this.getMetricsFor(mediaType).HttpList.push(vo);
             this.metricAdded(mediaType, this.adapter.metricsList.HTTP_REQUEST, vo);
             var ws = this.system.getObject("websocket");
-            ws.print("-------ADDING HTTP: " + JSON.stringify(vo) + "-----------\n");
+            ws.print("-------ADDING HTTP: " + JSON.stringify(vo) + "-----------finally\n");
             return vo;
         },
         addRepresentationSwitch: function(mediaType, t, mt, to, lto) {
@@ -13352,7 +13352,6 @@ MediaPlayer.rules.AbandonRequestsRule = function() {
                 if (fragmentInfo.bytesLoaded < fragmentInfo.bytesTotal && fragmentInfo.elapsedTime >= GRACE_TIME_THRESHOLD) {
                     fragmentInfo.measuredBandwidthInKbps = Math.round(fragmentInfo.bytesLoaded * 8 / fragmentInfo.elapsedTime);
                     fragmentInfo.estimatedTimeOfDownload = (fragmentInfo.bytesTotal * 8 * .001 / fragmentInfo.measuredBandwidthInKbps).toFixed(2);
-                    this.websocket.info(Math.round(fragmentInfo.measuredBandwidthInKbps * 1e3));
                     if (fragmentInfo.estimatedTimeOfDownload < fragmentInfo.segmentDuration * ABANDON_MULTIPLIER || representationInfo.quality === 0) {
                         callback(switchRequest);
                         return;
@@ -13364,6 +13363,8 @@ MediaPlayer.rules.AbandonRequestsRule = function() {
                         delete fragmentDict[mediaType][fragmentInfo.id];
                     }
                 } else if (fragmentInfo.bytesLoaded === fragmentInfo.bytesTotal) {
+                    var measuredBandwidthInKbps = Math.round(fragmentInfo.bytesLoaded * 8 / fragmentInfo.elapsedTime);
+                    if (measuredBandwidthInKbps <= 1e4) this.websocket.info(Math.round(measuredBandwidthInKbps * 1e3));
                     delete fragmentDict[mediaType][fragmentInfo.id];
                 }
             }
