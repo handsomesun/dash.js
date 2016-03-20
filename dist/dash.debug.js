@@ -4481,8 +4481,8 @@ MediaPlayer.dependencies.FragmentLoader = function() {
             download = requestVO.requestEndDate.getTime() - requestVO.firstByteDate.getTime();
             self.log((succeeded ? "loaded " : "failed ") + requestVO.mediaType + ":" + requestVO.type + ":" + requestVO.startTime + " (" + req.status + ", " + latency + "ms, " + download + "ms)");
             if (!isNaN(requestVO.startTime)) {
-                var BW = requestVO.bytesLoaded * 8 / (download / 1e3);
-                if (BW <= 1e7) self.websocket.info(BW);
+                var BW = requestVO.bytesLoaded * 8 / ((download + latency) / 1e3);
+                self.websocket.info(BW);
             }
             self.metricsModel.addHttpRequest(request.mediaType, null, request.type, request.url, req.responseURL || null, request.range, request.requestStartDate, requestVO.firstByteDate, requestVO.requestEndDate, req.status, request.duration, req.getAllResponseHeaders(), succeeded ? traces : null);
         };

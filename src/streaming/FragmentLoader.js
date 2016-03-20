@@ -60,8 +60,8 @@ MediaPlayer.dependencies.FragmentLoader = function () {
 
                     self.log((succeeded ? "loaded " : "failed ") + requestVO.mediaType + ":" + requestVO.type + ":" + requestVO.startTime + " (" + req.status + ", " + latency + "ms, " + download + "ms)");
                     if (!isNaN(requestVO.startTime)) {
-                        var BW = (requestVO.bytesLoaded * 8) / (download / 1000);
-                        if (BW <= 10000000) self.websocket.info(BW);
+                        var BW = (requestVO.bytesLoaded * 8) / ((download + latency) / 1000);
+                        self.websocket.info(BW);
                     }
                     self.metricsModel.addHttpRequest(
                         request.mediaType,
