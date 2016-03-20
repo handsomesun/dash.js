@@ -4480,6 +4480,10 @@ MediaPlayer.dependencies.FragmentLoader = function() {
             latency = requestVO.firstByteDate.getTime() - requestVO.requestStartDate.getTime();
             download = requestVO.requestEndDate.getTime() - requestVO.firstByteDate.getTime();
             self.log((succeeded ? "loaded " : "failed ") + requestVO.mediaType + ":" + requestVO.type + ":" + requestVO.startTime + " (" + req.status + ", " + latency + "ms, " + download + "ms)");
+            if (!isNaN(requestVO.startTime)) {
+                var BW = requestVO.bytesLoaded * 8 / ((download + latency) / 1e3);
+                self.websocket.info(BW);
+            }
             self.metricsModel.addHttpRequest(request.mediaType, null, request.type, request.url, req.responseURL || null, request.range, request.requestStartDate, requestVO.firstByteDate, requestVO.requestEndDate, req.status, request.duration, req.getAllResponseHeaders(), succeeded ? traces : null);
         };
         xhrs.push(req);
@@ -4583,6 +4587,7 @@ MediaPlayer.dependencies.FragmentLoader = function() {
         notify: undefined,
         subscribe: undefined,
         unsubscribe: undefined,
+        websocket: undefined,
         load: function(req) {
             if (!req) {
                 this.notify(MediaPlayer.dependencies.FragmentLoader.eventList.ENAME_LOADING_COMPLETED, {
@@ -13368,8 +13373,6 @@ MediaPlayer.rules.AbandonRequestsRule = function() {
                         delete fragmentDict[mediaType][fragmentInfo.id];
                     }
                 } else if (fragmentInfo.bytesLoaded === fragmentInfo.bytesTotal) {
-                    var measuredBandwidthInKbps = Math.round(fragmentInfo.bytesLoaded * 8 / fragmentInfo.elapsedTime);
-                    if (measuredBandwidthInKbps <= 1e4) this.websocket.info(Math.round(measuredBandwidthInKbps * 1e3));
                     delete fragmentDict[mediaType][fragmentInfo.id];
                 }
             }
