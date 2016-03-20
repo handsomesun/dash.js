@@ -113,8 +113,8 @@ MediaPlayer.rules.AbandonRequestsRule = function () {
                         delete fragmentDict[mediaType][fragmentInfo.id];
                     }
                 }else if (fragmentInfo.bytesLoaded === fragmentInfo.bytesTotal) {
-                    var measuredBandwidthInKbps = Math.round(fragmentInfo.bytesLoaded*8/fragmentInfo.elapsedTime);
-                    if (measuredBandwidthInKbps <= 10000) this.websocket.info(Math.round(measuredBandwidthInKbps * 1000));
+                    //var measuredBandwidthInKbps = Math.round(fragmentInfo.bytesLoaded*8/fragmentInfo.elapsedTime);
+                    //if (measuredBandwidthInKbps <= 10000) this.websocket.info(Math.round(measuredBandwidthInKbps * 1000));
                     delete fragmentDict[mediaType][fragmentInfo.id];
                 }
             }
