@@ -7240,7 +7240,7 @@ MediaPlayer.dependencies.BufferController = function() {
         return totalBufferedTime < criticalBufferLevel;
     }, pruneBuffer = function() {
         var start = buffer.buffered.length ? buffer.buffered.start(0) : 0, currentTime = this.playbackController.getTime(), bufferToPrune = currentTime - start - MediaPlayer.dependencies.BufferController.BUFFER_TO_KEEP;
-        if (!isPruningInProgress && mediaSource.readyState !== "ended") {
+        if (bufferToPrune > 0 && !isPruningInProgress && mediaSource.readyState !== "ended") {
             isPruningInProgress = true;
             this.sourceBufferExt.remove(buffer, 0, Math.round(start + bufferToPrune), mediaSource);
         }
