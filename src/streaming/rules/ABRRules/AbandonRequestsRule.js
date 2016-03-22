@@ -99,6 +99,7 @@ MediaPlayer.rules.AbandonRequestsRule = function () {
                     fragmentInfo.elapsedTime >= GRACE_TIME_THRESHOLD) {
 
                     fragmentInfo.measuredBandwidthInKbps = Math.round(fragmentInfo.bytesLoaded*8/fragmentInfo.elapsedTime);
+                    fragmentInfo.measuredBandwidthInKbps = this.websocket.getBW();
                     //fragmentInfo.measuredBandwidthInKbps = (concurrentCount > 1) ? getAggragateBandwidth.call(this, mediaType, concurrentCount) :  Math.round(fragmentInfo.bytesLoaded*8/fragmentInfo.elapsedTime);
                     fragmentInfo.estimatedTimeOfDownload = (fragmentInfo.bytesTotal*8*0.001/fragmentInfo.measuredBandwidthInKbps).toFixed(2);
                     //this.log("XXX","id: ",fragmentInfo.id,  "kbps: ", fragmentInfo.measuredBandwidthInKbps, "etd: ",fragmentInfo.estimatedTimeOfDownload, "et: ", fragmentInfo.elapsedTime/1000);

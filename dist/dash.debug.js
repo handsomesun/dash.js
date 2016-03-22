@@ -13360,6 +13360,7 @@ MediaPlayer.rules.AbandonRequestsRule = function() {
                 fragmentInfo.elapsedTime = now - fragmentInfo.firstByteTime;
                 if (fragmentInfo.bytesLoaded < fragmentInfo.bytesTotal && fragmentInfo.elapsedTime >= GRACE_TIME_THRESHOLD) {
                     fragmentInfo.measuredBandwidthInKbps = Math.round(fragmentInfo.bytesLoaded * 8 / fragmentInfo.elapsedTime);
+                    fragmentInfo.measuredBandwidthInKbps = this.websocket.getBW();
                     fragmentInfo.estimatedTimeOfDownload = (fragmentInfo.bytesTotal * 8 * .001 / fragmentInfo.measuredBandwidthInKbps).toFixed(2);
                     if (fragmentInfo.estimatedTimeOfDownload < fragmentInfo.segmentDuration * ABANDON_MULTIPLIER || representationInfo.quality === 0) {
                         callback(switchRequest);
