@@ -4480,7 +4480,7 @@ MediaPlayer.dependencies.FragmentLoader = function() {
             latency = requestVO.firstByteDate.getTime() - requestVO.requestStartDate.getTime();
             download = requestVO.requestEndDate.getTime() - requestVO.firstByteDate.getTime();
             self.log((succeeded ? "loaded " : "failed ") + requestVO.mediaType + ":" + requestVO.type + ":" + requestVO.startTime + " (" + req.status + ", " + latency + "ms, " + download + "ms)");
-            if (!isNaN(requestVO.startTime)) {
+            if (!isNaN(requestVO.startTime) && requestVO.mediaType === "video") {
                 var BW = requestVO.bytesLoaded * 8 / ((download + latency) / 1e3);
                 self.websocket.info(BW);
             }
